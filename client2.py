@@ -24,6 +24,8 @@ print(f"正在连接{SERVER_IP}:{SERVER_PORT}...")
 try:
     client_socket.connect((SERVER_IP,SERVER_PORT))
     print("连接成功！")
+    login_msg = f"LOGIN|{my_name}\n"
+    client_socket.sendall(login_msg.encode("utf-8"))
     # 启动接收消息的后台线程
     receive_thread = threading.Thread(target=receive_messages, args=(client_socket,), daemon=True)
     receive_thread.start()
@@ -36,5 +38,13 @@ while True:
     msg=input("你说：")
     if msg=='exit':
         break
-    data_to_send=f"GROUP|{my_name}|{msg}\n"
+    if msg.startswith("@"):
+        parts = msg[1:].split(" ", 1)
+        if len(parts) != 2:
+            print("私聊格式：@用户名 消息")
+            continue
+        receiver, content = parts
+        data_to_send = f"PRIVATE|{my_name}|{receiver}|{content}\n"
+    else:
+        data_to_send = f"GROUP|{my_name}|{msg}\n"
     client_socket.sendall(data_to_send.encode('utf-8'))
